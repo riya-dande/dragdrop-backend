@@ -1,6 +1,6 @@
 import Router from "express"
-import {loginUser,createdUser,createUserByAdmin,getAllUsers,getUserById, changePassword, deleteUser} from "./user.controller.ts";
-import { adminOnly, tokenCheck } from "../../middleware/auth.middleware.ts";
+import {loginUser,createdUser,createUserByAdmin,getAllUsers,getUserById, changePassword, deleteUser} from "./user.controller.js";
+import { adminOnly, tokenCheck } from "../../middleware/auth.middleware.js";
 
 export const userRouter = Router();
 userRouter.post("/login",loginUser);

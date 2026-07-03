@@ -3,8 +3,8 @@ import {
   createResponseController,
   getResponseByIdController,
   getResponsesByFormController,
-} from "./response.controller.ts";
-import { tokenCheck } from "../../middleware/auth.middleware.ts";
+} from "./response.controller.js";
+import { tokenCheck } from "../../middleware/auth.middleware.js";
 
 export const responseRouter = Router();
 

@@ -1,15 +1,17 @@
 import express from "express"
-import {userRouter} from "./modules/user/user.routes.ts"
-import { appRouter } from "./modules/app/app.routes.ts"
-import { formRouter } from "./modules/forms/form.routes.ts"
-import { responseRouter } from "./modules/response/response.routes.ts"
-import { frontendRouter } from "./modules/frontend/frontend.routes.ts"
+import {userRouter} from "./modules/user/user.routes.js"
+import { appRouter } from "./modules/app/app.routes.js"
+import { formRouter } from "./modules/forms/form.routes.js"
+import { responseRouter } from "./modules/response/response.routes.js"
+import { frontendRouter } from "./modules/frontend/frontend.routes.js"
 import cors from "cors";
 const app = express()
 const primaryPort = Number(process.env.PORT ?? 3000)
 const ports = Array.from(new Set([primaryPort, 8081]))
 app.use(cors({
-    origin:"http://localhost:4200"
+    origin:["http://localhost:4200","https://6a475ca239fed69b64fcb0f8--drapdrop.netlify.app/auth"],
+    credentials:true
+
 }));
 // app.use((request, response, next) => {
 //     response.header("Access-Control-Allow-Origin", "*");

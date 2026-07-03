@@ -4,8 +4,8 @@ import {
   getAllFormsController,
   getFormByIdController,
   getFormsByAppIdController,
-} from "./form.controller.ts";
-import { tokenCheck } from "../../middleware/auth.middleware.ts";
+} from "./form.controller.js";
+import { tokenCheck } from "../../middleware/auth.middleware.js";
 
 export const formRouter = Router();
 

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { createApp, getAllApps, getAppById } from "./app.service.ts";
-import { getAuthUser } from "../../middleware/auth.middleware.ts";
+import { createApp, getAllApps, getAppById } from "./app.service.js";
+import { getAuthUser } from "../../middleware/auth.middleware.js";
 
 export async function createAppController(req: Request, res: Response) {
   try {

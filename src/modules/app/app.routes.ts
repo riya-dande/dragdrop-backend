@@ -3,8 +3,8 @@ import {
   createAppController,
   getAllAppsController,
   getAppByIdController,
-} from "./app.controller.ts";
-import { tokenCheck } from "../../middleware/auth.middleware.ts";
+} from "./app.controller.js";
+import { tokenCheck } from "../../middleware/auth.middleware.js";
 
 export const appRouter = Router();
 

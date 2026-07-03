@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { login, create, createByAdmin, getAll, getById, updatePassword, deleteId } from "./user.service.ts";
+import { login, create, createByAdmin, getAll, getById, updatePassword, deleteId } from "./user.service.js";
 
 export async function loginUser(req: Request, res: Response) {
   try {

@@ -1,7 +1,7 @@
 import Router from "express";
 import type { Request, Response } from "express";
-import { prisma } from "../../config/prisma.ts";
-import { getAuthUser, tokenCheck } from "../../middleware/auth.middleware.ts";
+import { prisma } from "../../config/prisma.js";
+import { getAuthUser, tokenCheck } from "../../middleware/auth.middleware.js";
 
 const DEFAULT_USER_EMAIL = "dragdrop-system@example.com";
 const DEFAULT_APP_NAME = "DragDrop";

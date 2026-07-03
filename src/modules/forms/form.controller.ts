@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
-import { getAuthUser } from "../../middleware/auth.middleware.ts";
+import { getAuthUser } from "../../middleware/auth.middleware.js";
 import {
   createForm,
   getAllForms,
   getFormById,
   getFormsByAppId,
-} from "./form.service.ts";
+} from "./form.service.js";
 
 export async function createFormController(req: Request, res: Response) {
   try {

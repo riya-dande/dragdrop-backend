@@ -1,5 +1,5 @@
-import { prisma } from "../../config/prisma.ts";
-import type { AuthUser } from "../../middleware/auth.middleware.ts";
+import { prisma } from "../../config/prisma.js";
+import type { AuthUser } from "../../middleware/auth.middleware.js";
 
 export async function createApp(data: any) {
   const { name, type, createdBy } = data;

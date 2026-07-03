@@ -1,5 +1,5 @@
-import { prisma } from "../../config/prisma.ts";
-import { protect } from "../../config/utils.ts";
+import { prisma } from "../../config/prisma.js";
+import { protect } from "../../config/utils.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
