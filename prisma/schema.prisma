@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  role      USERROLE @default(USER)
+
+  apps    App[]
+  forms   Form[]
+  records Record[]
+
+  @@map("user")
+}
+
+model App {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  type      String   @default("Collab")
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  creator User     @relation(fields: [createdBy], references: [id])
+  forms   Form[]
+  records Record[]
+
+  @@map("apps")
+}
+
+model Form {
+  id        String     @id @default(uuid())
+  appId     String     @map("app_id")
+  name      String
+  status    FORMSTATUS @default(DRAFT)
+  createdBy String     @map("created_by")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  app          App           @relation(fields: [appId], references: [id])
+  creator      User          @relation(fields: [createdBy], references: [id])
+  fields       DataControl[]
+  responses    Record[]
+
+  @@unique([appId, name])
+  @@map("forms")
+}
+
+model DataControl {
+  id            String    @id @default(uuid())
+  formId        String    @map("form_id")
+  controlKey    String    @map("control_key")
+  type          FIELDTYPE
+  label         String
+  placeholder   String?
+  required      Boolean   @default(false)
+  dropdownItems Json?     @map("dropdown_items")
+  sortOrder     Int       @default(0) @map("sort_order")
+
+  form   Form          @relation(fields: [formId], references: [id])
+  values RecordValue[]
+
+  @@unique([formId, controlKey])
+  @@map("data_controls")
+}
+
+model Record {
+  id          String   @id @default(uuid())
+  appId       String   @map("app_id")
+  formId      String   @map("form_id")
+  submittedBy String?  @map("submitted_by")
+  submittedAt DateTime @default(now()) @map("submitted_at")
+
+  app    App           @relation(fields: [appId], references: [id])
+  form   Form          @relation(fields: [formId], references: [id])
+  user   User?         @relation(fields: [submittedBy], references: [id])
+  values RecordValue[]
+
+  @@map("records")
+}
+
+model RecordValue {
+  id            String @id @default(uuid())
+  recordId      String @map("record_id")
+  dataControlId String @map("data_control_id")
+  value         Json
+
+  record      Record      @relation(fields: [recordId], references: [id])
+  field       DataControl @relation(fields: [dataControlId], references: [id])
+
+  @@map("record_values")
+}
+
+enum USERROLE {
+  ADMIN
+  USER
+}
+
+enum FORMSTATUS {
+  DRAFT
+  PUBLISHED
+}
+
+enum FIELDTYPE {
+  TEXT
+  DATE
+  NUMBER
+  CHECKBOX
+  DROPDOWN
+}

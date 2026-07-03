@@ -1,0 +1,52 @@
+import express from "express"
+import {userRouter} from "./modules/user/user.routes.ts"
+import { appRouter } from "./modules/app/app.routes.ts"
+import { formRouter } from "./modules/forms/form.routes.ts"
+import { responseRouter } from "./modules/response/response.routes.ts"
+import { frontendRouter } from "./modules/frontend/frontend.routes.ts"
+import cors from "cors";
+const app = express()
+const primaryPort = Number(process.env.PORT ?? 3000)
+const ports = Array.from(new Set([primaryPort, 8081]))
+app.use(cors({
+    origin:"http://localhost:4200"
+}));
+// app.use((request, response, next) => {
+//     response.header("Access-Control-Allow-Origin", "*");
+//     response.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+//     response.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+//     if (request.method === "OPTIONS") {
+//         return response.sendStatus(204);
+//     }
+
+//     next();
+// });
+
+app.use(express.json());
+
+app.use("/api/v1/user",userRouter);
+app.use("/api/v1/app", appRouter);
+app.use("/api/v1/form", formRouter);
+app.use("/api/v1/response", responseRouter);
+app.use("/api", frontendRouter);
+
+app.get("/api/health", (request, response) => {
+    response.status(200).json({
+        error: false,
+        data: null,
+        message: "Server is working fine."
+    })
+});
+
+
+for (const port of ports) {
+    app.listen(port, (error?: Error) => {
+        if (error) {
+            console.error("Failed to start server:", error.message)
+            process.exit(1)
+        }
+
+        console.log(`Server started at http://localhost:${port}`)
+    });
+}
