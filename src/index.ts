@@ -9,7 +9,11 @@ const app = express()
 const primaryPort = Number(process.env.PORT ?? 3000)
 const ports = Array.from(new Set([primaryPort, 8081]))
 app.use(cors({
-    origin:["http://localhost:4200","https://6a475ca239fed69b64fcb0f8--drapdrop.netlify.app/auth"],
+    origin:[
+        "http://localhost:4200",
+        "https://drapdrop.netlify.app",
+        "https://6a475ca239fed69b64fcb0f8--drapdrop.netlify.app"
+    ],
     credentials:true
 
 }));
