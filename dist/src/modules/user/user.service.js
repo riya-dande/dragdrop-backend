@@ -37,12 +37,13 @@ export async function login(userdata) {
 }
 export async function create(userdata) {
     const { email, password } = userdata;
+    const usersCount = await prisma.user.count();
     const hashpass = await protect(password);
     const result = await prisma.user.create({
         data: {
             email: email.trim().toLowerCase(),
             password: hashpass,
-            role: "USER",
+            role: usersCount === 0 ? "ADMIN" : "USER",
         },
         select: {
             id: true,
