@@ -9,18 +9,13 @@ const app = express();
 const primaryPort = Number(process.env.PORT ?? 3000);
 const ports = Array.from(new Set([primaryPort, 8081]));
 app.use(cors({
-    origin: ["http://localhost:4200", "https://6a475ca239fed69b64fcb0f8--drapdrop.netlify.app/auth"],
+    origin: [
+        "http://localhost:4200",
+        "https://drapdrop.netlify.app",
+        "https://6a475ca239fed69b64fcb0f8--drapdrop.netlify.app"
+    ],
     credentials: true
 }));
-// app.use((request, response, next) => {
-//     response.header("Access-Control-Allow-Origin", "*");
-//     response.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-//     response.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//     if (request.method === "OPTIONS") {
-//         return response.sendStatus(204);
-//     }
-//     next();
-// });
 app.use(express.json());
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/app", appRouter);

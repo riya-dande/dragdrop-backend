@@ -52,5 +52,10 @@ export function adminOnly(req, res, next) {
     }
     next();
 }
+// Frontend/Postman sends Authorization header
+// -> tokenCheck reads token
+// -> jwt.verify converts token into user data
+// -> tokenCheck saves it as req.user
+// -> getAuthUser(req) returns req.user as AuthUser
 // middle ware is a function which is in btw req and res 
 //# sourceMappingURL=auth.middleware.js.map
