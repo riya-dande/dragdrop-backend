@@ -1,4 +1,4 @@
-import { login, create, createByAdmin, getAll, getById, updatePassword, deleteId } from "./user.service.js";
+import { login, create, createByAdmin, getAll, getById, updatePassword, deleteId, sendPasswordResetLink, updatePasswordWithResetToken } from "./user.service.js";
 export async function loginUser(req, res) {
     try {
         const { email, password } = req.body;
@@ -101,6 +101,57 @@ export async function createUserByAdmin(req, res) {
     }
     catch (error) {
         return res.status(500).json({
+            error: true,
+            data: null,
+            message: error.message,
+        });
+    }
+}
+export async function forgotPassword(req, res) {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: "Email is required",
+            });
+        }
+        const result = await sendPasswordResetLink(email);
+        return res.status(200).json({
+            error: false,
+            data: null,
+            message: result.message,
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            error: true,
+            data: null,
+            message: error.message,
+        });
+    }
+}
+export async function resetPassword(req, res) {
+    try {
+        const token = req.body.token || req.body.resetToken;
+        const password = req.body.password || req.body.newPassword;
+        if (!token || !password) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: "Token and password are required",
+            });
+        }
+        const result = await updatePasswordWithResetToken(token, password);
+        return res.status(200).json({
+            error: false,
+            data: null,
+            message: result.message,
+        });
+    }
+    catch (error) {
+        return res.status(400).json({
             error: true,
             data: null,
             message: error.message,
