@@ -138,7 +138,9 @@ export async function forgotPassword(req: Request, res: Response) {
 
     return res.status(200).json({
       error: false,
-      data: null,
+      data: {
+        resetLink: result.resetLink,
+      },
       message: result.message,
     });
   } catch (error: any) {

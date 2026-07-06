@@ -106,6 +106,7 @@ export async function sendPasswordResetLink(email) {
     if (!user || !user.isActive) {
         return {
             message: "If the email exists, password reset instructions have been sent.",
+            resetLink: null,
         };
     }
     const token = jwt.sign({
@@ -117,9 +118,16 @@ export async function sendPasswordResetLink(email) {
     });
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:4200";
     const resetLink = `${frontendUrl.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`;
-    await sendResetEmail(user.email, resetLink);
+    const emailSent = await sendResetEmail(user.email, resetLink);
+    if (!emailSent) {
+        return {
+            message: "Email service is not configured. Use the reset link below for local testing.",
+            resetLink,
+        };
+    }
     return {
         message: "Password reset link sent. Please check your email.",
+        resetLink: null,
     };
 }
 export async function updatePasswordWithResetToken(token, password) {
@@ -147,7 +155,11 @@ async function sendResetEmail(to, resetLink) {
     const host = process.env.SMTP_HOST || "smtp.gmail.com";
     const port = Number(process.env.SMTP_PORT || 587);
     if (!user || !pass) {
-        throw new Error("Email service is not configured. Set SMTP_USER and SMTP_PASS.");
+        if (!isLocalPasswordResetMode()) {
+            throw new Error("Email service is not configured. Set SMTP_USER and SMTP_PASS.");
+        }
+        console.log(`Password reset link for ${to}: ${resetLink}`);
+        return false;
     }
     const transporter = nodemailer.createTransport({
         host,
@@ -169,6 +181,12 @@ async function sendResetEmail(to, resetLink) {
         `,
         text: `Open this link to set a new password: ${resetLink}`,
     });
+    return true;
+}
+function isLocalPasswordResetMode() {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:4200";
+    const isLocalFrontend = frontendUrl.includes("localhost") || frontendUrl.includes("127.0.0.1");
+    return isLocalFrontend && process.env.RENDER !== "true" && process.env.NODE_ENV !== "production";
 }
 export async function getAll() {
     const users = await prisma.user.findMany({
