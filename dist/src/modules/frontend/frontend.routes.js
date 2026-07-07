@@ -90,16 +90,19 @@ async function getFormWithFields(id) {
         },
     });
 }
-function buildFieldCreates(fields) {
-    return fields.map((field, index) => ({
-        controlKey: String(field.id ?? `field_${index + 1}`),
+function buildFieldData(field, index) {
+    return {
+        controlKey: String(field.controlKey ?? field.id ?? `field_${index + 1}`),
         type: normalizeFieldType(field.type),
         label: field.label?.trim() || `Field ${index + 1}`,
         placeholder: field.placeholder ?? "",
         required: field.required ?? false,
         dropdownItems: field.dropdownItems,
         sortOrder: index,
-    }));
+    };
+}
+function buildFieldCreates(fields) {
+    return fields.map((field, index) => buildFieldData(field, index));
 }
 async function buildRecordPayload(formId, values) {
     const form = await getFormWithFields(formId);
@@ -441,35 +444,76 @@ frontendRouter.put("/forms/:id", async (req, res) => {
         if (!Array.isArray(fields) || fields.length === 0) {
             return res.status(400).json({ message: "At least one field is required." });
         }
-        await prisma.recordValue.deleteMany({
-            where: {
-                dataControlId: {
-                    in: existingForm.fields.map(field => field.id),
+        const existingFieldsById = new Map(existingForm.fields.map(field => [field.id, field]));
+        const existingFieldsByControlKey = new Map(existingForm.fields.map(field => [field.controlKey, field]));
+        const existingFieldsBySignature = new Map(existingForm.fields.map(field => [`${String(field.type).toLowerCase()}::${field.label.trim().toLowerCase()}`, field]));
+        const retainedFieldIds = new Set();
+        const updatedForm = await prisma.$transaction(async (transaction) => {
+            await transaction.form.update({
+                where: {
+                    id: existingForm.id,
                 },
-            },
-        });
-        await prisma.dataControl.deleteMany({
-            where: {
-                formId: existingForm.id,
-            },
-        });
-        const updatedForm = await prisma.form.update({
-            where: {
-                id: existingForm.id,
-            },
-            data: {
-                name: name.trim(),
-                fields: {
-                    create: buildFieldCreates(fields),
+                data: {
+                    name: name.trim(),
                 },
-            },
-            include: {
-                fields: {
-                    orderBy: {
-                        sortOrder: "asc",
+            });
+            for (const [index, field] of fields.entries()) {
+                const fieldData = buildFieldData(field, index);
+                const fieldId = field.id ? String(field.id) : "";
+                const signature = `${String(fieldData.type).toLowerCase()}::${fieldData.label.trim().toLowerCase()}`;
+                const existingField = existingFieldsById.get(fieldId) ??
+                    existingFieldsByControlKey.get(fieldData.controlKey) ??
+                    existingFieldsBySignature.get(signature);
+                if (existingField) {
+                    retainedFieldIds.add(existingField.id);
+                    await transaction.dataControl.update({
+                        where: {
+                            id: existingField.id,
+                        },
+                        data: fieldData,
+                    });
+                }
+                else {
+                    const createdField = await transaction.dataControl.create({
+                        data: {
+                            ...fieldData,
+                            formId: existingForm.id,
+                        },
+                    });
+                    retainedFieldIds.add(createdField.id);
+                }
+            }
+            const removedFieldIds = existingForm.fields
+                .filter(field => !retainedFieldIds.has(field.id))
+                .map(field => field.id);
+            if (removedFieldIds.length > 0) {
+                await transaction.recordValue.deleteMany({
+                    where: {
+                        dataControlId: {
+                            in: removedFieldIds,
+                        },
+                    },
+                });
+                await transaction.dataControl.deleteMany({
+                    where: {
+                        id: {
+                            in: removedFieldIds,
+                        },
+                    },
+                });
+            }
+            return transaction.form.findUnique({
+                where: {
+                    id: existingForm.id,
+                },
+                include: {
+                    fields: {
+                        orderBy: {
+                            sortOrder: "asc",
+                        },
                     },
                 },
-            },
+            });
         });
         return res.status(200).json(mapForm(updatedForm));
     }
