@@ -155,6 +155,7 @@ async function sendResetEmail(to, resetLink) {
     const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASS;
     const host = process.env.SMTP_HOST || "smtp.gmail.com";
     const port = Number(process.env.SMTP_PORT || 587);
+    const timeoutMs = Number(process.env.SMTP_TIMEOUT_MS || 10000);
     if (!user || !pass) {
         if (!isLocalPasswordResetMode()) {
             throw new Error("Email service is not configured. Set SMTP_USER and SMTP_PASS.");
@@ -166,22 +167,40 @@ async function sendResetEmail(to, resetLink) {
         host,
         port,
         secure: port === 465,
+        connectionTimeout: timeoutMs,
+        greetingTimeout: timeoutMs,
+        socketTimeout: timeoutMs,
         auth: {
             user,
             pass,
         },
     });
-    await transporter.sendMail({
-        from: process.env.MAIL_FROM || user,
-        to,
-        subject: "Reset your password",
-        html: `
-            <p>You requested a password reset.</p>
-            <p><a href="${resetLink}">Click here to set a new password</a></p>
-            <p>This link expires in 15 minutes.</p>
-        `,
-        text: `Open this link to set a new password: ${resetLink}`,
-    });
+    try {
+        const info = await transporter.sendMail({
+            from: process.env.MAIL_FROM || user,
+            to,
+            subject: "Reset your password",
+            html: `
+                <p>You requested a password reset.</p>
+                <p><a href="${resetLink}">Click here to set a new password</a></p>
+                <p>This link expires in 15 minutes.</p>
+            `,
+            text: `Open this link to set a new password: ${resetLink}`,
+        });
+        console.log("Password reset email result:", {
+            to,
+            messageId: info.messageId,
+            accepted: info.accepted,
+            rejected: info.rejected,
+            response: info.response,
+        });
+        if (!info.accepted?.length || info.rejected?.length) {
+            throw new Error(`SMTP did not accept the reset email. Accepted: ${info.accepted?.join(", ") || "none"}. Rejected: ${info.rejected?.join(", ") || "none"}.`);
+        }
+    }
+    catch (error) {
+        throw new Error(`Unable to send reset email. Check SMTP_USER, SMTP_PASS, MAIL_FROM and Gmail App Password settings. ${error.message}`);
+    }
     return true;
 }
 function isLocalPasswordResetMode() {
