@@ -1,6 +1,17 @@
 import type { Request, Response } from "express";
 import { login, create, createByAdmin, getAll, getById, updatePassword, deleteId, sendPasswordResetLink, updatePasswordWithResetToken } from "./user.service.js";
 
+const gmailOnlyMessage = "Please enter a Gmail account only.";
+const strongPasswordMessage = "Password must be at least 8 characters and include a letter, a number, and a special character.";
+
+function isGmailAddress(email: string) {
+  return /^[^\s@]+@gmail\.com$/i.test(email.trim());
+}
+
+function isStrongPassword(password: string) {
+  return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(password.trim());
+}
+
 export async function loginUser(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
@@ -10,6 +21,14 @@ export async function loginUser(req: Request, res: Response) {
         error: true,
         data: null,
         message: "Email and password are required",
+      });
+    }
+
+    if (!isGmailAddress(email)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: gmailOnlyMessage,
       });
     }
 
@@ -58,6 +77,22 @@ export async function createdUser(req: Request, res: Response) {
       });
     }
 
+    if (!isGmailAddress(email)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: gmailOnlyMessage,
+      });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: strongPasswordMessage,
+      });
+    }
+
     const result = await create({
       ...userdata,
       email: email.trim().toLowerCase(),
@@ -98,6 +133,22 @@ export async function createUserByAdmin(req: Request, res: Response) {
       });
     }
 
+    if (!isGmailAddress(email)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: gmailOnlyMessage,
+      });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: strongPasswordMessage,
+      });
+    }
+
     if (role && role !== "ADMIN" && role !== "USER") {
       return res.status(400).json({
         error: true,
@@ -134,6 +185,14 @@ export async function forgotPassword(req: Request, res: Response) {
       });
     }
 
+    if (!isGmailAddress(email)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: gmailOnlyMessage,
+      });
+    }
+
     const result = await sendPasswordResetLink(email);
 
     return res.status(200).json({
@@ -162,6 +221,14 @@ export async function resetPassword(req: Request, res: Response) {
         error: true,
         data: null,
         message: "Token and password are required",
+      });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: strongPasswordMessage,
       });
     }
 
@@ -218,6 +285,16 @@ export async function getUserById(req: Request, res: Response) {
 
 export async function changePassword(req: Request, res: Response) {
   try {
+    const password = req.body.newPassword || req.body.password;
+
+    if (!password || !isStrongPassword(password)) {
+      return res.status(400).json({
+        error: true,
+        data: null,
+        message: strongPasswordMessage,
+      });
+    }
+
     const result = await updatePassword(req.body);
     return res.status(200).json(result);
   } catch (error: any) {

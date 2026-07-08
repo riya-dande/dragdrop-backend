@@ -1,4 +1,12 @@
 import { login, create, createByAdmin, getAll, getById, updatePassword, deleteId, sendPasswordResetLink, updatePasswordWithResetToken } from "./user.service.js";
+const gmailOnlyMessage = "Please enter a Gmail account only.";
+const strongPasswordMessage = "Password must be at least 8 characters and include a letter, a number, and a special character.";
+function isGmailAddress(email) {
+    return /^[^\s@]+@gmail\.com$/i.test(email.trim());
+}
+function isStrongPassword(password) {
+    return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(password.trim());
+}
 export async function loginUser(req, res) {
     try {
         const { email, password } = req.body;
@@ -7,6 +15,13 @@ export async function loginUser(req, res) {
                 error: true,
                 data: null,
                 message: "Email and password are required",
+            });
+        }
+        if (!isGmailAddress(email)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: gmailOnlyMessage,
             });
         }
         const result = await login({ email, password });
@@ -49,6 +64,20 @@ export async function createdUser(req, res) {
                 message: "password is not correct",
             });
         }
+        if (!isGmailAddress(email)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: gmailOnlyMessage,
+            });
+        }
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: strongPasswordMessage,
+            });
+        }
         const result = await create({
             ...userdata,
             email: email.trim().toLowerCase(),
@@ -85,6 +114,20 @@ export async function createUserByAdmin(req, res) {
                 message: "password is not correct",
             });
         }
+        if (!isGmailAddress(email)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: gmailOnlyMessage,
+            });
+        }
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: strongPasswordMessage,
+            });
+        }
         if (role && role !== "ADMIN" && role !== "USER") {
             return res.status(400).json({
                 error: true,
@@ -117,6 +160,13 @@ export async function forgotPassword(req, res) {
                 message: "Email is required",
             });
         }
+        if (!isGmailAddress(email)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: gmailOnlyMessage,
+            });
+        }
         const result = await sendPasswordResetLink(email);
         return res.status(200).json({
             error: false,
@@ -143,6 +193,13 @@ export async function resetPassword(req, res) {
                 error: true,
                 data: null,
                 message: "Token and password are required",
+            });
+        }
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: strongPasswordMessage,
             });
         }
         const result = await updatePasswordWithResetToken(token, password);
@@ -197,6 +254,14 @@ export async function getUserById(req, res) {
 }
 export async function changePassword(req, res) {
     try {
+        const password = req.body.newPassword || req.body.password;
+        if (!password || !isStrongPassword(password)) {
+            return res.status(400).json({
+                error: true,
+                data: null,
+                message: strongPasswordMessage,
+            });
+        }
         const result = await updatePassword(req.body);
         return res.status(200).json(result);
     }
